@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Nearby / Places feature (Phase 02) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Location placeholders, wired in from Phase 02 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Maps key injected from gradle.properties (resValue in build.gradle.kts).
+         Builds fine with an empty key; app shows a "no API key yet" state. -->
+    <application
+        android:name=".DriverDemandRadarApplication"
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.DriverDemandRadar">
+
+        <!-- @string/GOOGLE_MAPS_API_KEY is created by resValue in build.gradle.kts
+             from the GOOGLE_MAPS_API_KEY gradle property (empty by default). -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/GOOGLE_MAPS_API_KEY" />
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Plain Light theme, no action bar: the app is fully Compose-driven and
+      renders its own Scaffold/top bar, so we only need a bare base theme.
+    -->
+    <style name="Theme.DriverDemandRadar" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

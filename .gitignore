@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Local secrets & IDE
+local.properties
+.idea/
+*.iml
+captures/
+
+# Build artifacts
+*.apk
+*.aab
+release.jks
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+
+# Note: gradle.properties IS committed with an EMPTY GOOGLE_MAPS_API_KEY=.
+# Put the real key in a local-only override (~/.gradle/gradle.properties or a
+# gradle.properties.local read by the build) — never commit a real key.

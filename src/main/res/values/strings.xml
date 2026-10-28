@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Driver Demand Radar</string>
+
+    <!-- Bottom navigation tabs -->
+    <string name="tab_nearby">Nearby</string>
+    <string name="tab_my_locations">My Locations</string>
+    <string name="tab_settings">Settings</string>
+
+    <!-- Floating action button (pickup logging lands in Phase 03) -->
+    <string name="fab_log">Log</string>
+    <string name="fab_snackbar_placeholder">Pickup logging lands in Phase 03</string>
+
+    <!-- Nearby screen -->
+    <string name="nearby_no_api_key">No Google Maps API key yet.\nAdd GOOGLE_MAPS_API_KEY to gradle.properties to enable places search.</string>
+    <string name="nearby_placeholder">Places search lands in Phase 02</string>
+
+    <!-- My Locations screen -->
+    <string name="my_locations_empty">No saved locations yet</string>
+
+    <!-- Settings screen -->
+    <string name="settings_app_version">App version</string>
+    <string name="settings_google_key">Google Maps API key</string>
+    <string name="settings_key_set">Set</string>
+    <string name="settings_key_not_set">Not set</string>
+    <string name="settings_last_export">Last export</string>
+    <string name="settings_last_export_placeholder">—</string>
+</resources>
