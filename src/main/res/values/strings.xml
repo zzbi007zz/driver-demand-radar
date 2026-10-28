@@ -45,10 +45,25 @@
     <string name="location_detail_logged_later">logged later</string>
     <string name="location_detail_deleted">Pickup deleted</string>
 
+    <!-- Heat strip (7x24) -->
+    <string name="heat_title">Demand heat (8 weeks)</string>
+    <string name="heat_top_slot">%1$s %2$d–%3$dh: %4$d</string>
+    <string name="heat_insufficient">Not enough data yet — %1$d of %2$d logged. Keep logging.</string>
+    <string name="heat_filtered">%1$d pickups · %2$s %3$d–%4$dh</string>
+    <string name="heat_clear">Clear</string>
+
+    <!-- Location permission -->
+    <string name="nearby_allow_location">Allow location</string>
+    <string name="permission_rationale_title">Allow location access</string>
+    <string name="permission_rationale_body">Driver Demand Radar needs your location to find popular spots near you. It is used only on this phone, never sent anywhere except when you export a backup yourself.</string>
+    <string name="permission_permanent_denied">Location blocked. Enable it in system settings to search nearby places.</string>
+    <string name="permission_open_settings">Open settings</string>
+
     <!-- Common -->
     <string name="common_back">Back</string>
     <string name="common_undo">Undo</string>
     <string name="common_delete">Delete</string>
+    <string name="common_later">Later</string>
 
     <!-- Settings screen -->
     <string name="settings_app_version">App version</string>
@@ -57,4 +72,12 @@
     <string name="settings_key_not_set">Not set</string>
     <string name="settings_last_export">Last export</string>
     <string name="settings_last_export_placeholder">—</string>
+    <string name="settings_last_export_at">Exported %1$s</string>
+    <string name="settings_heat_gate">Heat minimum (count)</string>
+    <string name="settings_heat_gate_hint">Show the heat grid once a location reaches this many pickups.</string>
+    <string name="settings_export">Export backup</string>
+    <string name="settings_exporting">Preparing export…</string>
+    <string name="settings_export_done">Backup ready to share</string>
+    <string name="settings_export_failed">Export failed — try again</string>
+    <string name="settings_export_warning">The export includes your notes. Share it only where you trust it to go.</string>
 </resources>

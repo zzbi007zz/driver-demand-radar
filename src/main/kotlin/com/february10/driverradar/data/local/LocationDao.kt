@@ -61,6 +61,10 @@ interface LocationDao {
     )
     fun recentWithPickupStats(limit: Int): Flow<List<LocationWithStats>>
 
+    /** All rows (for JSON export). */
+    @Query("SELECT * FROM locations")
+    suspend fun all(): List<LocationEntity>
+
     /**
      * A location row joined with its pickup aggregates in one query (no N+1).
      * Flat projection — Room can't embed an entity object from SQL columns,

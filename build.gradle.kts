@@ -33,10 +33,53 @@ android {
         resValue("string", "GOOGLE_MAPS_API_KEY", providers.gradleProperty("GOOGLE_MAPS_API_KEY").orNull.orEmpty())
     }
 
+    // Release keystore is the user's manual step (keystores stay OUT of git;
+    // see docs/release-checklist.md). When ANDROID_RELEASE_KEYSTORE points at
+    // one, the release variant signs with it. When it is NOT set, AGP would
+    // silently fall back to the debug keystore for the release APK — which
+    // hides the "release SHA-1 missing from the GCP key restriction" trap —
+    // so the guard below makes :assembleRelease fail fast instead.
+    signingConfigs {
+        create("release") {
+            val keystorePath = providers.environmentVariable("ANDROID_RELEASE_KEYSTORE").orNull
+            if (!keystorePath.isNullOrBlank()) {
+                storeFile = file(keystorePath)
+                storePassword = providers.environmentVariable("ANDROID_RELEASE_KEYSTORE_PASS").orNull ?: "android"
+                keyAlias = providers.environmentVariable("ANDROID_RELEASE_ALIAS").orNull ?: "driverradar"
+                keyPassword = providers.environmentVariable("ANDROID_RELEASE_ALIAS_PASS").orNull ?: storePassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+            // Null config = AGP debug-signs the release APK; the guard task
+            // below keeps that from ever running.
+            signingConfig = if (providers.environmentVariable("ANDROID_RELEASE_KEYSTORE").orNull.isNullOrBlank()) null else signingConfigs.getByName("release")
+        }
+    }
+
+    // Fail fast when the release keystore env var is missing (debug-only dev
+    // machines): without it, :assembleRelease would ship a debug-signed APK
+    // that looks like a release build but fails GCP key restriction checks.
+    if (providers.environmentVariable("ANDROID_RELEASE_KEYSTORE").orNull.isNullOrBlank()) {
+        tasks.register("verifyReleaseSigningConfigured") {
+            group = "verification"
+            description = "Fails when ANDROID_RELEASE_KEYSTORE is unset, blocking an accidental debug-signed release APK."
+            doLast {
+                error(
+                    "ANDROID_RELEASE_KEYSTORE is not set — refusing to sign the release build with the debug keystore. " +
+                        "Create a release keystore (docs/release-checklist.md), then: " +
+                        "export ANDROID_RELEASE_KEYSTORE=<path> ANDROID_RELEASE_KEYSTORE_PASS=<pass> AND ./gradlew :assembleRelease"
+                )
+            }
+        }
+        tasks.configureEach {
+            if (name == "packageRelease" || name == "assembleRelease") {
+                dependsOn("verifyReleaseSigningConfigured")
+            }
         }
     }
 

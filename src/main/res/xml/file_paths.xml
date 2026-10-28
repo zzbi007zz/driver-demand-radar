@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider paths for JSON export sharing (cache dir only — the backup
+     file is a transient share payload, see ExportRepository). -->
+<paths>
+    <cache-path name="exports" path="exports/" />
+</paths>

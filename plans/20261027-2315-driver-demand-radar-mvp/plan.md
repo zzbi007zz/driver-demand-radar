@@ -29,7 +29,7 @@ Adding cloud later stays a clean additive option — nothing here couples to it.
 |---|-------|------|--------|------------|
 | 01 | [Setup: gradle, AppContainer, Room schema]([phase-01-setup-project-and-skeleton.md](phase-01-setup-project-and-skeleton.md)) | 4h | done (2026-10-28, commit 0791891 + ee0a83d) | release keystore |
 | 02 | [Locations layer: Places + Nearby/My Locations]([phase-02-locations-layer.md](phase-02-locations-layer.md)) | 6h | done (2026-10-28, commit 677ea36) | 01, GCP key |
-| 03 | [Log Pickup sheet + Location detail history]([phase-03-pickup-log.md](phase-03-pickup-log.md)) | 5h | in-progress | 02 |
+| 03 | [Log Pickup sheet + Location detail history]([phase-03-pickup-log.md](phase-03-pickup-log.md)) | 5h | done (2026-10-28, commit 4104782) | 02 |
 | 04 | [7x24 heat + JSON export + GPS/release polish]([phase-04-heat-export-polish.md](phase-04-heat-export-polish.md)) | 6h | pending | 03 |
 
 **Total: 21h.** Strictly sequential (each builds the previous screens/repositories).

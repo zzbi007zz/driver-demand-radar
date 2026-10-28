@@ -13,6 +13,48 @@ interface PickupDao {
     @Insert
     suspend fun insert(pickup: PickupEntity): Long
 
+    /**
+     * 7x24 heat buckets: count pickups per (weekday, hour) for one location.
+     *
+     * Buckets by [PickupEntity.actualPickupTime] — NOT loggedAt — so a pickup
+     * logged later but set "earlier" lands in the slot the ride happened.
+     * [windowStartMillis] limits the window (HeatRepository passes
+     * now-minus-8-weeks). `strftime` with `unixepoch` expects seconds, so the
+     * stored epoch-millis column is divided by 1000 first. `%w` yields
+     * 0=Sunday..6=Saturday; the CASE remaps to 0=Monday..6=Sunday to
+     * match [com.february10.driverradar.model.HeatBucket] (0=Monday).
+     * Grouping in SQL keeps this a single pass — no in-memory loop over all
+     * rows. Reactive: the strip refreshes as new pickups are logged.
+     */
+    @Query(
+        """
+        SELECT CASE WHEN CAST(strftime('%w', actualPickupTime / 1000, 'unixepoch', 'localtime') AS INTEGER) = 0
+                     THEN 6
+                     ELSE CAST(strftime('%w', actualPickupTime / 1000, 'unixepoch', 'localtime') AS INTEGER) - 1
+                END AS weekday,
+               CAST(strftime('%H', actualPickupTime / 1000, 'unixepoch', 'localtime') AS INTEGER) AS hour,
+               COUNT(*) AS count
+        FROM pickups
+        WHERE locationId = :locationId AND actualPickupTime >= :windowStartMillis
+        GROUP BY weekday, hour
+        """
+    )
+    fun heatBuckets(locationId: Long, windowStartMillis: Long): Flow<List<HeatBucketRow>>
+
+    /** Pickups in the 8-week window — matches [heatBuckets]'s WHERE clause exactly. */
+    @Query("SELECT COUNT(*) FROM pickups WHERE locationId = :locationId AND actualPickupTime >= :windowStartMillis")
+    fun heatTotal(locationId: Long, windowStartMillis: Long): Flow<Int>
+
+    /** All rows (for JSON export). */
+    @Query("SELECT * FROM pickups")
+    suspend fun all(): List<PickupEntity>
+
+    data class HeatBucketRow(
+        val weekday: Int,
+        val hour: Int,
+        val count: Int,
+    )
+
     /** Re-insert with an explicit id (undo-delete restore); no-op if the row reappeared. */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertWithId(pickup: PickupEntity)

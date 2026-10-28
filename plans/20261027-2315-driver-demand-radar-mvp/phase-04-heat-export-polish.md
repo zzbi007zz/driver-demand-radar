@@ -9,7 +9,7 @@
 
 ## Overview
 
-- **Date:** 2026-10-27 · **Priority:** P2 · **Status:** pending
+- **Date:** 2026-10-27 · **Priority:** P2 · **Status:** done (2026-10-28)
 - 7×24 heat strip on Location Detail ("Fri 16–18h: 9 pickups"), honest insufficient-data states, JSON export/backup in Settings, real GPS permission flow, release keystore + GCP key restriction checklist to close MVP.
 
 ## Key Insights
@@ -62,13 +62,13 @@ Create (root = `/Users/february10/workspace/driver-demand-radar/`):
 
 ## Todo
 
-- [ ] HeatRepository 7×24 SQL + gate
-- [ ] HeatStrip composable + top-3 rows + cell tap
-- [ ] Insufficient-data state on Location Detail
-- [ ] Settings: gate editor + JSON export
-- [ ] Full GPS permission flow
-- [ ] Signed release build + GCP SHA-1 checklist verified
-- [ ] Unit tests (bucketing, gate boundary, export round-trip)
+- [x] HeatRepository 7×24 SQL + gate
+- [x] HeatStrip composable + top-3 rows + cell tap
+- [x] Insufficient-data state on Location Detail
+- [x] Settings: gate editor + JSON export
+- [x] Full GPS permission flow
+- [x] Signed release build wiring + GCP SHA-1 checklist doc (keystore creation = user's manual step)
+- [x] Unit tests (bucketing, gate boundary, export round-trip) — 21 pass, build green (2026-10-28)
 
 ## Success Criteria
 

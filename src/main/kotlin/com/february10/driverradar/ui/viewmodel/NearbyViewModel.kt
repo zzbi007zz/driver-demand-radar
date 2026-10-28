@@ -42,7 +42,8 @@ class NearbyViewModel(
     sealed interface UiState {
         data object Idle : UiState
         data object Locating : UiState
-        data object NoPermission : UiState
+        /** [permanent] = "don't ask again" hit; UI offers a settings deep link instead of re-requesting. */
+        data class NoPermission(val permanent: Boolean = false) : UiState
         data object NoFix : UiState
         data object NoKey : UiState
         data class Loading(val category: LocationCategory) : UiState
@@ -67,6 +68,20 @@ class NearbyViewModel(
     private val _uiState = MutableStateFlow<UiState>(UiState.Idle)
     val uiState: StateFlow<UiState> = _uiState.asStateFlow()
 
+    /** True after "don't ask again" — a re-request is silently dropped by the OS. */
+    private var permissionBlocked = false
+
+    /**
+     * Called from the permission launcher's denied callbacks. [reAskable]
+     * true = user tapped "deny" but can be asked again (the "Allow location"
+     * button stays up). false = "don't ask again" — the UI swaps to a
+     * settings deep link; re-requesting would be silently dropped.
+     */
+    fun locationPermissionDenied(reAskable: Boolean) {
+        permissionBlocked = !reAskable
+        _uiState.value = UiState.NoPermission(permanent = !reAskable)
+    }
+
     /** Triggers a fresh search with the currently selected category + radius. */
     fun search() {
         val cat = category.value
@@ -76,7 +91,10 @@ class NearbyViewModel(
             val gps = gpsProvider.getCurrentPosition()
             val (lat, lng) = when (gps) {
                 is GpsResult.NoPermission -> {
-                    _uiState.value = UiState.NoPermission
+                    // Preserve the "don't ask again" flag so a retried Search
+                    // doesn't turn the settings link back into a request the
+                    // OS would silently drop.
+                    _uiState.value = UiState.NoPermission(permanent = permissionBlocked)
                     return@launch
                 }
                 is GpsResult.NoFix -> {

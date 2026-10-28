@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -25,28 +25,47 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.february10.driverradar.R
 import com.february10.driverradar.data.local.LocationEntity
-import com.february10.driverradar.data.local.PickupEntity
+import com.february10.driverradar.model.HeatBucket
+import com.february10.driverradar.model.HeatMatrix
+import com.february10.driverradar.repo.HeatRepository
+import com.february10.driverradar.ui.components.HeatStrip
+import com.february10.driverradar.ui.components.PickupHistoryRow
+import com.february10.driverradar.ui.components.UndoBar
 import com.february10.driverradar.ui.viewmodel.LocationDetailViewModel
 import com.february10.driverradar.ui.viewmodel.LogPickupViewModel
-import com.february10.driverradar.util.formatWhen
 
 /**
  * Per-location pickup history, newest actual pickup first, with delete + a
- * 5s undo window shown as a persistent "Deleted — Undo" bar pinned at the
- * bottom. Tapping a My Locations row opens this screen.
+ * 5s undo bar pinned at the bottom. Tapping a My Locations row opens this
+ * screen.
+ *
+ * [minHeatCount] is the heat gate: below it the card shows an "N of gate"
+ * progress state instead of a grid — never a fake heat. Tapping a grid cell
+ * filters the history list to that weekday+hour.
  */
 @Composable
 fun LocationDetailScreen(
     modifier: Modifier = Modifier,
     location: LocationEntity,
     viewModel: LocationDetailViewModel,
+    minHeatCount: Int,
     onBack: () -> Unit,
     onLogHere: (LocationEntity) -> Unit,
 ) {
     val history by viewModel.history.collectAsStateWithLifecycle()
-    // The undo bar stays up for ~5s after a delete. We track it locally so
-    // the UI can re-insert on tap; the VM holds the actual row.
+    val heat by viewModel.heat.collectAsStateWithLifecycle()
     var showUndo by remember { mutableStateOf(false) }
+    // Tapped heat cell (weekday, hour) or null; filters the history list.
+    var selectedCell by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+    val windowStart = remember { HeatRepository.windowStartMillis() }
+
+    val visibleHistory = selectedCell?.let { cell ->
+        history.filter {
+            it.actualPickupTime >= windowStart &&
+                HeatBucket.of(it.actualPickupTime).weekday == cell.first &&
+                HeatBucket.of(it.actualPickupTime).hour == cell.second
+        }
+    } ?: history
 
     Column(modifier = modifier.fillMaxSize()) {
         LazyColumn(
@@ -68,14 +87,26 @@ fun LocationDetailScreen(
             }
 
             item {
+                HeatSection(
+                    matrix = heat,
+                    minHeatCount = minHeatCount,
+                    selected = selectedCell,
+                    onCellTap = { weekday, hour ->
+                        selectedCell = if (selectedCell == weekday to hour) null else weekday to hour
+                    },
+                    onClearFilter = { selectedCell = null },
+                )
+            }
+
+            item {
                 Text(
-                    text = stringResource(R.string.location_detail_count, history.size),
+                    text = stringResource(R.string.location_detail_count, visibleHistory.size),
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
             }
 
-            if (history.isEmpty()) {
+            if (visibleHistory.isEmpty()) {
                 item {
                     Text(
                         text = stringResource(R.string.location_detail_empty),
@@ -85,7 +116,7 @@ fun LocationDetailScreen(
                 }
             }
 
-            items(history, key = { it.id }) { pickup ->
+            items(visibleHistory, key = { it.id }) { pickup ->
                 PickupHistoryRow(
                     pickup = pickup,
                     loggedLater = LogPickupViewModel.isLoggedLater(pickup),
@@ -107,54 +138,39 @@ fun LocationDetailScreen(
     }
 }
 
-/** Pinned "Deleted — Undo" bar. */
+/** Heat card: grid when the gate is met, honest progress state below it. */
 @Composable
-private fun UndoBar(onUndo: () -> Unit) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = stringResource(R.string.location_detail_deleted),
-                modifier = Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            TextButton(onClick = onUndo) { Text(stringResource(R.string.common_undo)) }
-        }
-    }
-}
-
-@Composable
-private fun PickupHistoryRow(
-    pickup: PickupEntity,
-    loggedLater: Boolean,
-    onDelete: () -> Unit,
-    onLogHere: () -> Unit,
+private fun HeatSection(
+    matrix: HeatMatrix,
+    minHeatCount: Int,
+    selected: Pair<Int, Int>?,
+    onCellTap: (Int, Int) -> Unit,
+    onClearFilter: () -> Unit,
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = pickup.customerAlias, style = MaterialTheme.typography.titleMedium)
-                Text(text = formatWhen(pickup.actualPickupTime), style = MaterialTheme.typography.bodySmall)
-                pickup.note?.takeIf { it.isNotEmpty() }?.let {
-                    Text(text = it, style = MaterialTheme.typography.bodySmall)
-                }
-                if (loggedLater) {
-                    Text(
-                        text = "  (${stringResource(R.string.location_detail_logged_later)})",
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
+    if (matrix.totalCount >= minHeatCount) {
+        HeatStrip(
+            matrix = matrix,
+            selected = selected,
+            onCellTap = onCellTap,
+            onClearFilter = onClearFilter,
+            modifier = Modifier.padding(horizontal = 8.dp),
+        )
+    } else {
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(
+                        R.string.heat_insufficient,
+                        matrix.totalCount.coerceAtMost(minHeatCount),
+                        minHeatCount,
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                LinearProgressIndicator(
+                    progress = { (matrix.totalCount.toFloat() / minHeatCount).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-            TextButton(onClick = onLogHere) { Text(stringResource(R.string.log_here)) }
-            TextButton(onClick = onDelete) { Text(stringResource(R.string.common_delete)) }
         }
     }
 }

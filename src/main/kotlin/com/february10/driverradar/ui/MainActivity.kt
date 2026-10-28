@@ -46,6 +46,7 @@ import com.february10.driverradar.ui.viewmodel.LocationDetailViewModel
 import com.february10.driverradar.ui.viewmodel.LogPickupViewModel
 import com.february10.driverradar.ui.viewmodel.MyLocationsViewModel
 import com.february10.driverradar.ui.viewmodel.NearbyViewModel
+import com.february10.driverradar.ui.viewmodel.SettingsViewModel
 
 // Single-activity Compose shell: Material3 Scaffold, 3 bottom-nav tabs, and a
 // floating "Log" FAB that opens the Log Pickup sheet. Location detail overlays
@@ -88,8 +89,16 @@ class MainActivity : ComponentActivity() {
                 }
                 // One detail VM per opened location; a new location = a new VM.
                 val detailViewModel = remember(detailLocation) {
-                    LocationDetailViewModel(container.pickupRepository, detailLocation?.id ?: 0L)
+                    LocationDetailViewModel(
+                        container.pickupRepository,
+                        container.heatRepository,
+                        detailLocation?.id ?: 0L,
+                    )
                 }
+                val settingsViewModel: SettingsViewModel = viewModel {
+                    SettingsViewModel(container.settingsStore, container.exportRepository)
+                }
+                val heatGate by settingsViewModel.gate.collectAsStateWithLifecycle()
 
                 // Reset the sheet for a fresh open (prefilled or clean).
                 LaunchedEffect(logSheetOpen) {
@@ -120,7 +129,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = myLocationsViewModel,
                             onLocationClick = { detailLocation = it },
                         )
-                        2 -> SettingsScreen(Modifier.padding(padding))
+                        2 -> SettingsScreen(Modifier.padding(padding), settingsViewModel)
                         else -> NearbyScreen(Modifier.padding(padding), nearbyViewModel)
                     }
                 }
@@ -130,6 +139,7 @@ class MainActivity : ComponentActivity() {
                     LocationDetailScreen(
                         location = location,
                         viewModel = detailViewModel,
+                        minHeatCount = heatGate,
                         onBack = { detailLocation = null },
                         onLogHere = { target ->
                             logSheetPrefill = target
