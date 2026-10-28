@@ -33,6 +33,13 @@ class LocationRepository(private val dao: LocationDao) {
 
     fun recentLocations(limit: Int): Flow<List<LocationEntity>> = dao.recentLocations(limit)
 
+    /**
+     * Recent locations enriched with pickup count + last-pickup time in a
+     * single SQL pass (no N+1). Powers the My Locations screen.
+     */
+    fun recentWithStats(limit: Int): Flow<List<LocationDao.LocationWithStats>> =
+        dao.recentWithPickupStats(limit)
+
     /** Convenience for Phase 02 call sites building a location from a place hit. */
     fun toEntity(place: com.february10.driverradar.data.places.SearchablePlace): LocationEntity {
         val source = if (place.placeId != null) LocationSource.GOOGLE_PLACE else LocationSource.MANUAL

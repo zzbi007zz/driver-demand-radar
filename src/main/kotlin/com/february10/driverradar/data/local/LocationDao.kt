@@ -40,4 +40,43 @@ interface LocationDao {
         """
     )
     fun recentLocations(limit: Int): Flow<List<LocationEntity>>
+
+    /**
+     * [recentLocations] plus per-location pickup count + most-recent pickup
+     * time, computed in one SQL pass (no N+1). [lastPickupTime] is null when
+     * the location has no pickups yet.
+     */
+    @Query(
+        """
+        SELECT l.*,
+               (SELECT COUNT(*) FROM pickups p1 WHERE p1.locationId = l.id) AS pickupCount,
+               (SELECT MAX(p2.actualPickupTime) FROM pickups p2 WHERE p2.locationId = l.id) AS lastPickupTime
+        FROM locations l
+        ORDER BY COALESCE(
+            (SELECT MAX(p3.actualPickupTime) FROM pickups p3 WHERE p3.locationId = l.id),
+            l.createdAt
+        ) DESC
+        LIMIT :limit
+        """
+    )
+    fun recentWithPickupStats(limit: Int): Flow<List<LocationWithStats>>
+
+    /**
+     * A location row joined with its pickup aggregates in one query (no N+1).
+     * Flat projection — Room can't embed an entity object from SQL columns,
+     * so the columns mirror [LocationEntity] field-for-field and the
+     * repository folds them into an entity when needed.
+     */
+    data class LocationWithStats(
+        val id: Long,
+        val source: String,
+        val placeId: String?,
+        val name: String,
+        val category: String,
+        val lat: Double,
+        val lng: Double,
+        val createdAt: Long,
+        val pickupCount: Int,
+        val lastPickupTime: Long?,
+    )
 }

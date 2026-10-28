@@ -1,8 +1,10 @@
 package com.february10.driverradar.data.places
 
+import com.february10.driverradar.data.local.LocationCategory
+
 /**
- * Result of a place search: name, coordinates, an optional stable place id
- * (used for location dedupe) and an optional category.
+ * A location hit from a places search: name, coordinates, an optional stable
+ * place id (used for location dedupe) and an optional category label.
  */
 data class SearchablePlace(
     val name: String,
@@ -13,15 +15,47 @@ data class SearchablePlace(
 )
 
 /**
- * A location search interface so Phase 02's real Places-backed searcher slots
- * in with zero refactor. [NoopPlaceSearcher] is the default until then.
+ * Structured search outcome so the UI can show meaningful states instead of
+ * throwing. [NoKey] = the Maps key resValue is empty (clean checkout).
  */
-interface PlaceSearcher {
-    /** Returns matching places for the query; empty when no results. */
-    suspend fun search(query: String): List<SearchablePlace>
+sealed interface SearchOutcome {
+    /** One or more matches (possibly zero rows in the range). */
+    data class Places(val results: List<SearchablePlace>) : SearchOutcome
+
+    /** No Maps API key configured. */
+    data object NoKey : SearchOutcome
+
+    /** Google rejected the request (bad key, quota, IP restriction). */
+    data class ApiError(val status: Int, val message: String) : SearchOutcome
+
+    /** Could not reach Google at all. */
+    data class NetworkError(val message: String) : SearchOutcome
 }
 
-/** Placeholder searcher: emits nothing. Phase 02 replaces this. */
+/**
+ * Category-nearby place search seam. Phase 01 shipped [NoopPlaceSearcher] so
+ * the app builds without a key; Phase 02 backs it with the Places API (New).
+ * [NoopPlaceSearcher] stays for unit tests.
+ */
+interface PlaceSearcher {
+    /**
+     * Search [radiusMeters] around the point for [category]. Categories with
+     * no Google primary type (e.g. RESIDENTIAL) fall back to a text search.
+     */
+    suspend fun nearby(
+        category: LocationCategory,
+        lat: Double,
+        lng: Double,
+        radiusMeters: Int,
+    ): SearchOutcome
+}
+
+/** Placeholder searcher: always reports "no key" so the UI gate is testable. */
 class NoopPlaceSearcher : PlaceSearcher {
-    override suspend fun search(query: String): List<SearchablePlace> = emptyList()
+    override suspend fun nearby(
+        category: LocationCategory,
+        lat: Double,
+        lng: Double,
+        radiusMeters: Int,
+    ): SearchOutcome = SearchOutcome.NoKey
 }

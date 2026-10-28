@@ -12,11 +12,23 @@
     <string name="fab_snackbar_placeholder">Pickup logging lands in Phase 03</string>
 
     <!-- Nearby screen -->
+    <string name="nearby_title">Popular spots near me</string>
+    <string name="nearby_search">Search</string>
+    <string name="nearby_save">Save</string>
+    <string name="nearby_saved">Saved ✓</string>
+    <string name="nearby_loading">Searching…</string>
+    <string name="nearby_no_results">No places found in this area</string>
+    <string name="nearby_no_permission">Location permission needed to find nearby places</string>
+    <string name="nearby_no_fix">Couldn\'t get a GPS fix — try again</string>
     <string name="nearby_no_api_key">No Google Maps API key yet.\nAdd GOOGLE_MAPS_API_KEY to gradle.properties to enable places search.</string>
-    <string name="nearby_placeholder">Places search lands in Phase 02</string>
+    <string name="nearby_api_error">Google rejected the request (check key restriction / quota)</string>
+    <string name="nearby_network_error">Network error — check connection</string>
 
     <!-- My Locations screen -->
     <string name="my_locations_empty">No saved locations yet</string>
+    <string name="my_locations_add_manual">Add a place manually…</string>
+    <string name="my_locations_add">Add</string>
+    <string name="my_locations_last">last %1$s</string>
 
     <!-- Settings screen -->
     <string name="settings_app_version">App version</string>

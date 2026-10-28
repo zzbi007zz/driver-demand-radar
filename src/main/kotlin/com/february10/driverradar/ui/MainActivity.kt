@@ -49,7 +49,6 @@ class MainActivity : ComponentActivity() {
         val container = (application as DriverDemandRadarApplication).container
 
         // Non-composable reads so the Strings survive into the onClick lambdas.
-        val mapsKey = resources.getString(R.string.GOOGLE_MAPS_API_KEY)
         val fabLogLabel = resources.getString(R.string.fab_log)
         val fabSnackbarText = resources.getString(R.string.fab_snackbar_placeholder)
 
@@ -67,11 +66,15 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // Lifecycle-scoped VMs.
+                val nearbyViewModel: NearbyViewModel = viewModel {
+                    NearbyViewModel(
+                        placeSearcher = container.placeSearcher,
+                        gpsProvider = container.gpsProvider,
+                        locationRepository = container.locationRepository,
+                    )
+                }
                 val myLocationsViewModel: MyLocationsViewModel = viewModel {
                     MyLocationsViewModel(container.locationRepository)
-                }
-                val nearbyViewModel: NearbyViewModel = viewModel {
-                    NearbyViewModel(mapsKey)
                 }
 
                 Scaffold(
