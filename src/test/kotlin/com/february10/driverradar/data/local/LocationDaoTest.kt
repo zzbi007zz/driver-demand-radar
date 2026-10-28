@@ -27,6 +27,7 @@ class LocationDaoTest {
 
     private lateinit var db: DemandRadarDb
     private lateinit var dao: LocationDao
+    private lateinit var pickupDao: PickupDao
     private lateinit var repo: LocationRepository
 
     @Before
@@ -34,6 +35,7 @@ class LocationDaoTest {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = DemandRadarDb.inMemory(context)
         dao = db.locationDao()
+        pickupDao = db.pickupDao()
         repo = LocationRepository(dao)
     }
 
@@ -91,6 +93,28 @@ class LocationDaoTest {
         assertNull("manual locations carry no placeId", row.placeId)
         assertEquals(LocationSource.MANUAL.value, row.source)
         assertEquals(manual.createdAt, row.createdAt)
+    }
+
+    @Test
+    fun recentWithPickupStatsCountsAndOrdersByLastPickup() = runTest {
+        // Two locations, one with no pickups, one with two (newer last pickup).
+        val idle = dao.insert(location(placeId = null, name = "Idle"))
+        val busy = dao.insert(location(placeId = null, name = "Busy"))
+        pickupDao.insert(
+            PickupEntity(locationId = busy, customerAlias = "a", note = null, loggedAt = 100L, actualPickupTime = 100L)
+        )
+        pickupDao.insert(
+            PickupEntity(locationId = busy, customerAlias = "b", note = null, loggedAt = 500L, actualPickupTime = 500L)
+        )
+
+        val stats = dao.recentWithPickupStats(100).first()
+        assertEquals("Busy", stats.first().name)
+        assertEquals(2, stats.first().pickupCount)
+        assertEquals(500L, stats.first().lastPickupTime)
+
+        assertEquals("Idle", stats.last().name)
+        assertEquals(0, stats.last().pickupCount)
+        assertEquals(null, stats.last().lastPickupTime)
     }
 
     /** Convenience factory for a well-formed [LocationEntity]. */

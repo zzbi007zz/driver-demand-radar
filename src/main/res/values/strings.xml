@@ -30,6 +30,26 @@
     <string name="my_locations_add">Add</string>
     <string name="my_locations_last">last %1$s</string>
 
+    <!-- Log Pickup sheet -->
+    <string name="log_pick_location">Pick a location</string>
+    <string name="log_new_location_hint">New place (type a name)</string>
+    <string name="log_note_hint">Note (optional)</string>
+    <string name="log_save">Save pickup</string>
+    <string name="log_earlier">Earlier (%1$s)</string>
+    <string name="log_here">Log here</string>
+    <string name="log_saved_snackbar">Logged</string>
+
+    <!-- Location detail / history -->
+    <string name="location_detail_count">%1$d pickups</string>
+    <string name="location_detail_empty">0 pickups here yet</string>
+    <string name="location_detail_logged_later">logged later</string>
+    <string name="location_detail_deleted">Pickup deleted</string>
+
+    <!-- Common -->
+    <string name="common_back">Back</string>
+    <string name="common_undo">Undo</string>
+    <string name="common_delete">Delete</string>
+
     <!-- Settings screen -->
     <string name="settings_app_version">App version</string>
     <string name="settings_google_key">Google Maps API key</string>

@@ -93,6 +93,46 @@ class PickupDaoTest {
         }
     }
 
+    @Test
+    fun distinctAliasesAreMostRecentFirst() = runTest {
+        val loc = createLocation("spot")
+        // "Zeta" logged last -> most recent -> ranks first.
+        pickupDao.insert(pickup(loc, "alpha", 100L, 100L))
+        pickupDao.insert(pickup(loc, "beta", 200L, 200L))
+        pickupDao.insert(pickup(loc, "alpha", 500L, 500L)) // alpha used again
+        pickupDao.insert(pickup(loc, "zeta", 900L, 900L))
+
+        val aliases = pickupDao.distinctAliases().first()
+        assertEquals(listOf("zeta", "alpha", "beta"), aliases)
+    }
+
+    @Test
+    fun deleteThenRestoreRoundTrips() = runTest {
+        val loc = createLocation("spot")
+        val row = pickupDao.insert(pickup(loc, "keep", 700L, 700L))
+
+        pickupDao.delete(row)
+        assertEquals(emptyList<PickupEntity>(), pickupDao.historyByLocation(loc).first())
+        assertEquals(null, pickupDao.byId(row).first())
+
+        // Restore re-inserts with the SAME id (undo-delete path).
+        val restored = pickupWithId(insertedId = row, locationId = loc, alias = "keep", 700L, 700L)
+        pickupDao.insertWithId(restored)
+
+        val rows = pickupDao.historyByLocation(loc).first()
+        assertEquals(1, rows.size)
+        assertEquals(row, rows.single().id)
+        assertEquals("keep", rows.single().customerAlias)
+    }
+
+    @Test
+    fun byIdReturnsNullWhenDeleted() = runTest {
+        val loc = createLocation("spot")
+        val row = pickupDao.insert(pickup(loc, "gone", 10L, 10L))
+        pickupDao.delete(row)
+        assertEquals(null, pickupDao.byId(row).first())
+    }
+
     private suspend fun createLocation(name: String): Long =
         locationDao.insert(
             LocationEntity(
@@ -107,11 +147,20 @@ class PickupDaoTest {
         )
 
     private fun pickup(locationId: Long, alias: String, loggedAt: Long, actual: Long) =
-        PickupEntity(
-            locationId = locationId,
-            customerAlias = alias,
-            note = null,
-            loggedAt = loggedAt,
-            actualPickupTime = actual,
-        )
+        pickupWithId(insertedId = 0L, locationId = locationId, alias = alias, loggedAt = loggedAt, actual = actual)
+
+    private fun pickupWithId(
+        insertedId: Long,
+        locationId: Long,
+        alias: String,
+        loggedAt: Long,
+        actual: Long,
+    ) = PickupEntity(
+        id = insertedId,
+        locationId = locationId,
+        customerAlias = alias,
+        note = null,
+        loggedAt = loggedAt,
+        actualPickupTime = actual,
+    )
 }

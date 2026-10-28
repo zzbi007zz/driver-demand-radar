@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.february10.driverradar.R
+import com.february10.driverradar.data.local.LocationEntity
 import com.february10.driverradar.ui.viewmodel.MyLocationRow
 import com.february10.driverradar.ui.viewmodel.MyLocationsViewModel
 import java.util.Locale
@@ -37,6 +38,7 @@ import java.util.Locale
 fun MyLocationsScreen(
     modifier: Modifier = Modifier,
     viewModel: MyLocationsViewModel,
+    onLocationClick: (LocationEntity) -> Unit = {},
 ) {
     val rows by viewModel.rows.collectAsStateWithLifecycle()
     var nameInput by remember { mutableStateOf("") }
@@ -78,14 +80,14 @@ fun MyLocationsScreen(
         }
 
         items(rows, key = { it.location.id }) { row ->
-            LocationRow(row)
+            LocationRow(row) { onLocationClick(row.location) }
         }
     }
 }
 
 @Composable
-private fun LocationRow(row: MyLocationRow) {
-    Card {
+private fun LocationRow(row: MyLocationRow, onClick: () -> Unit) {
+    Card(onClick = onClick) {
         Row(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
